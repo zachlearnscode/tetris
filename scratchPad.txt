@@ -1,0 +1,119 @@
+class Square {
+	constructor() {
+    this.coords = [[0,4], [0, 5], [1, 5], [1, 4]]
+    this.prevCoords = []
+  }
+  
+  move(direction) {
+    this.coords.forEach((c, i) => {
+    	let [row, col] = c;
+    	let [toRow, toCol] = direction;
+      
+      this.prevCoords[i] = c;
+      
+      row += toRow;
+      col += toCol;
+    })
+    
+    console.log(this.coords)
+  }
+}
+
+class TetrisBoard {
+	constructor() {
+  	this.rows = 20
+    this.cols = 10
+    this.board = undefined
+    this.currentTetromino = new Square()
+    this.nextTetromino = undefined
+  }
+  
+  buildBoard() {
+  	let board = new Array(this.rows).fill()
+    	.map(row => row = new Array(this.cols).fill("O"));
+    
+    return board;
+  }
+  
+  updateBoard() {
+  	let ct = this.currentTetromino;
+    
+    ct.coords.forEach((c, i) => {
+    	let [row, col] = c;    
+    	this.board[row][col] = "X";
+      
+      /* if (ct.prevCoords) {
+        let [pRow, pCol] = ct.prevCoords[i];
+        this.board[pRow][pCol] = "O"; 
+      } */
+    })
+  }
+}
+
+let tb = new TetrisBoard();
+tb.board = tb.buildBoard()
+
+tb.updateBoard();
+tb.currentTetromino.move([1, 0]);
+tb.updateBoard();
+tb.currentTetromino.move([0, 1]);
+tb.updateBoard();
+
+
+
+
+//square.coordinates = "South"
+
+//console.log(square.coordinates)
+/* const capitalL = [[0,4], [1,4], [2,4], [2,5]];
+const skew = [[0,4], [0, 3], [1, 4], [1, 5]];
+const line = [[0, 4], [1,4], [2,4], [3,4]];
+const tShape = [[0,4], [0,3], [0,5], [1, 4]];
+
+let tSquare = new Tetromino("square", square);
+let tL = new Tetromino("L", capitalL);
+let tSkew = new Tetromino("skew", skew);
+let tLine = new Tetromino("line", line);
+let tbShape = new Tetromino("T", tShape)
+
+tb.placeTetronimo(tSquare);
+tb.moveTetromino(tSquare); */
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    message: 'Hello Vue!',
+    board: tb.board
+  }
+})
+
+
+
+/* [
+  [..]
+  [..]
+] Square
+
+[
+  [.]
+  [.]
+  [..]
+]
+
+[
+  [.. ]
+  [ ..]
+]
+
+[
+  [...]
+  [ . ]
+]
+
+[
+  [.]
+  [.]
+  [.]
+  [.]
+]
+ */

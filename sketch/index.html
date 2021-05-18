@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+
+    <style>
+      * {
+        font-family: 'Courier New', Courier, monospace;
+      }
+    </style>
+
+    <title>Tetris Sketch</title>
+  </head>
+  <body>
+    <div id="app">
+      <div v-for="(row, r) in board">
+        <span v-for="(col, c) in row">{{col}}</span>
+      </div>
+     </div> 
+
+
+
+    <script src="./vue.js"></script>
+  </body>
+</html>
