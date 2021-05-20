@@ -58,7 +58,9 @@ class Tetromino {
         row + toRow < 0 ||
         row + toRow >= 20 ||
         col + toCol < 0 ||
-        col + toCol >= 10
+        col + toCol >= 10 ||
+        app.board[row + toRow][col] === "P" ||
+        app.board[row][col + toCol] === "P"
       );
     });
 
@@ -230,6 +232,7 @@ var app = new Vue({
     return {
       board: undefined,
       tetrominos: [],
+      cache: undefined,
     };
   },
 
@@ -285,11 +288,27 @@ var app = new Vue({
         return this.$set(this.board[row], col, val);
       });
     },
+    selectNextTetromino() {
+      let pieces = [
+        new O(),
+        new I(),
+        new T(),
+        new Z(),
+        new S(),
+        new J(),
+        new L(),
+      ];
+
+      let randomIdx = Math.floor(Math.random() * 7)
+
+      return pieces[randomIdx];
+    },
   },
 
   watch: {
     currentTetromino: {
       handler: function () {
+        console.log(this.currentTetromino.isPlaced);
         let cur = this.currentTetromino.coords;
         let pre = this.currentTetromino.prevCoords;
 
@@ -302,7 +321,12 @@ var app = new Vue({
           this.currentTetromino.intervalId = clearInterval(
             this.currentTetromino.intervalId
           );
-          this.tetrominos.push(new I());
+
+          if (this.board[0][4] === "O") {
+            this.tetrominos.push(this.selectNextTetromino())
+          } else {
+            console.log("Game Over");
+          }
         }
       },
       deep: true,
@@ -316,66 +340,66 @@ var app = new Vue({
       deep: true,
     },
     completedRows: function () {
+      //Find occupied coords whose row value matches the index of any of the completed rows.
+      let coordsInCompletedRows = this.occupiedCoordinates.filter((c) => {
+        let row = c[0];
+        return this.completedRows.includes(row);
+      });
 
-      if (this.completedRows.length) {
-        //debugger;
-        //Find occupied coords whos row value matches the index of any of the completed rows.
-        console.log(this.occupiedCoordinates)
-        let coordsInCompletedRows = this.occupiedCoordinates.filter((c) => {
-          let row = c[0];
-          return this.completedRows.includes(row);
-        });
+      coordsInCompletedRows.forEach((coord) => {
+        //Locate the tetromino that the coord belongs to.
+        let parentTetromino = this.tetrominos.find((t) =>
+          t.coords.includes(coord)
+        );
 
-        coordsInCompletedRows.forEach((coord) => {
-          //Locate the tetromino that the coord belongs to.
-          let parentTetromino = this.tetrominos
-            .find((t) => t.coords.includes(coord));
+        //Reset its coords to exclude the current coord.
+        parentTetromino.coords = parentTetromino.coords.filter(
+          (c) => c !== coord
+        );
+      });
 
-          //Reset its coords to exclude the current coord.
-          parentTetromino.coords = parentTetromino.coords.filter(c => c !== coord);
-        });
+      //Create a group of the coords remaining above the highest-indexed completed row.
+      let numRowsCleared = this.completedRows.length;
+      let idxOfDeepestCompletedRow = Math.max(...this.completedRows);
 
-        console.log(this.occupiedCoordinates)
+      let coordinatesToMoveDown = this.occupiedCoordinates.filter((c) => {
+        let row = c[0];
+        return row < idxOfDeepestCompletedRow;
+      });
 
-        //debugger;
+      //Open coords in completed rows.
+      this.updateBoard(coordsInCompletedRows, "O");
+      this.updateBoard(coordinatesToMoveDown, "O");
 
-        //Create a group of the coords remaining above the highest-indexed completed row.
-        let idxOfDeepestCompletedRow = Math.max(...this.completedRows);
+      //Set row value of remaining coords to the sum of the coords row value + the difference between the row value and the deepest compelted row.
+      coordinatesToMoveDown.forEach((c) => {
+        let row = c[0];
 
-        let coordinatesToMoveDown = this.occupiedCoordinates.filter(c => {
-          let row = c[0];
-          return row < idxOfDeepestCompletedRow;
-        });
+        return this.$set(c, 0, row + numRowsCleared);
+      });
 
-        //Open coords in completed rows.
-        this.updateBoard(coordsInCompletedRows, "O");
-        //this.updateBoard(coordinatesToMoveDown, "O")
-
-        //console.log(coordinatesToMoveDown)
-        //Set row value of remaining coords to the sum of the coords row value + the difference between the row value and the deepest compelted row.
-        coordinatesToMoveDown.forEach(c => {
-          let [row, col] = c;
-          let cellsToMove = idxOfDeepestCompletedRow - row;
-          c = [row + cellsToMove, col]
-        })
-
-        this.updateBoard(coordinatesToMoveDown, "P")
-
-        debugger
-
-
-        //console.log(coordinatesToMoveDown)
-
-      //   console.log(this.occupiedCoordinates)
-
-      //   this.updateBoard(this.occupiedCoordinates, "P")
-      // }
-      }
+      this.updateBoard(coordinatesToMoveDown, "P");
     },
   },
 
   created() {
     this.board = this.build();
-    this.tetrominos.push(new I());
+    this.tetrominos.push(this.selectNextTetromino());
+    
+    window.addEventListener('keydown', (e) => {
+      if (e.key === "w") {
+        this.currentTetromino.coords = this.currentTetromino.rotate();
+      } else if (e.key === "a") {
+        this.currentTetromino.coords = this.currentTetromino.move("left");
+      } else if (e.key === "d") {
+        this.currentTetromino.coords = this.currentTetromino.move("right");
+      } else if (e.key === "s") {
+        this.currentTetromino.coords = this.currentTetromino.move("down");
+      }
+      
+      e.preventDefault()
+    })
+
+
   },
 });

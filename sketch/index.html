@@ -8,20 +8,38 @@
 
     <style>
       * {
-        font-family: 'Courier New', Courier, monospace;
+        font-family: "Courier New", Courier, monospace;
+        box-sizing: border-box;
+      }
+      .row {
+        width: 100px;
+        height: 10px;
+        display:flex;
+      }
+      .cell {
+        display:inline;
+        aspect-ratio: 1 / 1;
+        border: 0.5px solid black;
+      }
+      .empty {
+        background-color: gray;
       }
     </style>
 
     <title>Tetris Sketch</title>
   </head>
   <body>
-    <div id="app">
-      <div v-for="(row, r) in board">
-        <span v-for="(col, c) in row">{{col}}</span>
+    <div id="app" @keyup.w="currentTetromino.coords = currentTetromino.rotate()">
+      <div v-for="(row, r) in board" class="row">
+        <div
+          v-for="(col, c) in row"
+          
+          class="cell"
+          :class="col === 'C' ? 'current' : col === 'P' ? 'placed' : 'empty'"
+          ></div
+        >
       </div>
-     </div> 
-
-
+    </div>
 
     <script src="./vue.js"></script>
   </body>
