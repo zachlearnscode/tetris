@@ -12,12 +12,12 @@ class Tetromino {
   }
 
   get aboveOccupiedCoord() {
-    let occupiedCoords = app.occupiedCoordinates.map((c) => c.toString());
+    let placed = app.occupiedCoordinates.slice(0, app.occupiedCoordinates.length - 4).map((c) => c.toString());
 
     let coordsAboveOccupiedCoords = this.coords.filter((c) => {
       let [row, col] = c;
 
-      return occupiedCoords.includes(`${row + 1},${col}`);
+      return placed.includes(`${row + 1},${col}`);
     });
 
     return coordsAboveOccupiedCoords.length ? true : false;
@@ -232,7 +232,6 @@ var app = new Vue({
     return {
       board: undefined,
       tetrominos: [],
-      cache: undefined,
     };
   },
 
@@ -240,17 +239,27 @@ var app = new Vue({
     currentTetromino() {
       return this.tetrominos[this.tetrominos.length - 1];
     },
-    placedTetrominos() {
-      return this.tetrominos
-        .slice(0, this.tetrominos.length - 1)
-        .filter((t) => t.coords.length);
-    },
     occupiedCoordinates() {
-      //Excludes currentTetromino's coordinates.
       let result = [];
-      let coords = this.placedTetrominos.map((t) => t.coords);
+      
+      this.tetrominos.map((t) => t.coords)
+        .forEach((c) => result.push(...c));
 
-      coords.forEach((c) => result.push(...c));
+      return result;
+    },
+    unoccupiedCoordinates() {
+      let result = [];
+      let occupiedCoordsAsStrings = this.occupiedCoordinates
+        .map(c => c.toString());
+      
+      this.board.forEach((row, r) => {
+        row.forEach((col, c) => {
+          let coord = `${r},${c}`;
+          if (!occupiedCoordsAsStrings.includes(coord)) {
+            return result.push([r, c]);
+          }
+        })
+      })
 
       return result;
     },
@@ -285,6 +294,7 @@ var app = new Vue({
     updateBoard(arr, val) {
       arr.forEach((c) => {
         let [row, col] = c;
+        //console.log(row, col)
         return this.$set(this.board[row], col, val);
       });
     },
@@ -299,7 +309,7 @@ var app = new Vue({
         new L(),
       ];
 
-      let randomIdx = Math.floor(Math.random() * 7)
+      let randomIdx = Math.floor(Math.random() * 7);
 
       return pieces[randomIdx];
     },
@@ -308,22 +318,21 @@ var app = new Vue({
   watch: {
     currentTetromino: {
       handler: function () {
-        console.log(this.currentTetromino.isPlaced);
-        let cur = this.currentTetromino.coords;
-        let pre = this.currentTetromino.prevCoords;
+        // let cur = this.currentTetromino.coords;
+        // let pre = this.currentTetromino.prevCoords;
 
-        //Update board to reflect currentTetromino's new position.
-        this.updateBoard(pre, "O");
-        this.updateBoard(cur, "C");
+        // //Update board to reflect currentTetromino's new position.
+        // //this.updateBoard(pre, "O");
+        // this.updateBoard(cur, "C");
 
-        //Add new game piece if currentTetromino is set.
+        // //Add new game piece if currentTetromino is set.
         if (this.currentTetromino.isPlaced) {
           this.currentTetromino.intervalId = clearInterval(
             this.currentTetromino.intervalId
           );
 
           if (this.board[0][4] === "O") {
-            this.tetrominos.push(this.selectNextTetromino())
+            this.tetrominos.push(this.selectNextTetromino());
           } else {
             console.log("Game Over");
           }
@@ -331,15 +340,31 @@ var app = new Vue({
       },
       deep: true,
     },
-    placedTetrominos: {
+    occupiedCoordinates: {
       handler: function () {
-        let placed = this.placedTetrominos.map((t) => t.coords).flat();
+        let current = this.occupiedCoordinates
+          .slice(this.occupiedCoordinates.length - 4);
+        let placed = this.occupiedCoordinates
+          .slice(0, this.occupiedCoordinates.length - 4);
 
+        this.updateBoard(current, "C");
         this.updateBoard(placed, "P");
+        this.updateBoard(this.unoccupiedCoordinates, "O");
       },
       deep: true,
     },
+    unoccupiedCoordinates: {
+      handler: function() {
+        console.log("UC")
+        this.updateBoard(this.unoccupiedCoordinates, "O")
+      },
+      deep: true
+    },
     completedRows: function () {
+      //Create a group of the coords remaining above the highest-indexed completed row.
+      let numRowsCleared = this.completedRows.length;
+      let idxOfDeepestCompletedRow = Math.max(...this.completedRows);
+
       //Find occupied coords whose row value matches the index of any of the completed rows.
       let coordsInCompletedRows = this.occupiedCoordinates.filter((c) => {
         let row = c[0];
@@ -347,6 +372,7 @@ var app = new Vue({
       });
 
       coordsInCompletedRows.forEach((coord) => {
+        let [row, col] = coord;
         //Locate the tetromino that the coord belongs to.
         let parentTetromino = this.tetrominos.find((t) =>
           t.coords.includes(coord)
@@ -358,35 +384,37 @@ var app = new Vue({
         );
       });
 
-      //Create a group of the coords remaining above the highest-indexed completed row.
-      let numRowsCleared = this.completedRows.length;
-      let idxOfDeepestCompletedRow = Math.max(...this.completedRows);
+      
 
-      let coordinatesToMoveDown = this.occupiedCoordinates.filter((c) => {
+      let coordinatesToMoveDown = this.occupiedCoordinates.slice(0, this.occupiedCoordinates.length - 4).filter((c) => {
         let row = c[0];
         return row < idxOfDeepestCompletedRow;
       });
 
-      //Open coords in completed rows.
-      this.updateBoard(coordsInCompletedRows, "O");
-      this.updateBoard(coordinatesToMoveDown, "O");
+      coordinatesToMoveDown.sort((a, b) => b[0] - a[0]);
 
       //Set row value of remaining coords to the sum of the coords row value + the difference between the row value and the deepest compelted row.
-      coordinatesToMoveDown.forEach((c) => {
-        let row = c[0];
+      coordinatesToMoveDown.forEach(c => {
+        //debugger
+        let [row, col] = c;
 
-        return this.$set(c, 0, row + numRowsCleared);
-      });
+        let possibleNewCoords = this.unoccupiedCoordinates.filter(oc => {
+          return oc[0] > row && oc[1] === col;
+        })
 
-      this.updateBoard(coordinatesToMoveDown, "P");
+        let newCoord = possibleNewCoords.sort((a, b) => b[0] - a[0])[0]
+
+        return this.$set(c, 0, newCoord[0]);
+      })
+      
     },
   },
 
   created() {
     this.board = this.build();
     this.tetrominos.push(this.selectNextTetromino());
-    
-    window.addEventListener('keydown', (e) => {
+
+    window.addEventListener("keydown", (e) => {
       if (e.key === "w") {
         this.currentTetromino.coords = this.currentTetromino.rotate();
       } else if (e.key === "a") {
@@ -396,10 +424,8 @@ var app = new Vue({
       } else if (e.key === "s") {
         this.currentTetromino.coords = this.currentTetromino.move("down");
       }
-      
-      e.preventDefault()
-    })
 
-
+      e.preventDefault();
+    });
   },
 });

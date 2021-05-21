@@ -29,13 +29,13 @@
     <title>Tetris Sketch</title>
   </head>
   <body>
-    <div id="app" @keyup.w="currentTetromino.coords = currentTetromino.rotate()">
+    <div id="app">
       <div v-for="(row, r) in board" class="row">
         <div
           v-for="(col, c) in row"
           
           class="cell"
-          :class="col === 'C' ? 'current' : col === 'P' ? 'placed' : 'empty'"
+          :class="col === 'C' ? 'current' : col === 'P' ? 'placed' : col === 'O' ? 'empty' : col"
           ></div
         >
       </div>
