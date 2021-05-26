@@ -22,7 +22,28 @@
         border: 0.5px solid black;
       }
       .empty {
-        background-color: gray;
+        background-color: lightgrey;
+      }
+      .I {
+        background-color: cyan;
+      }
+      .J {
+        background-color: blue;
+      }
+      .L {
+        background-color: orange;
+      }
+      .O {
+        background-color: yellow;
+      }
+      .S {
+        background-color: green;
+      }
+      .T {
+        background-color: purple;
+      }
+      .Z {
+        background-color: red;
       }
     </style>
 
@@ -35,12 +56,12 @@
           v-for="(col, c) in row"
           
           class="cell"
-          :class="col === 'C' ? 'current' : col === 'P' ? 'placed' : col === 'O' ? 'empty' : col"
+          :class="col === '' ? 'empty' : col"
           ></div
         >
       </div>
     </div>
 
-    <script src="./vue.js"></script>
+    <script type="module" src="./vue2.js"></script>
   </body>
 </html>

@@ -124,6 +124,7 @@ class Tetromino {
 class O extends Tetromino {
   constructor(prevCoords, intervalId) {
     super(prevCoords, intervalId);
+    this.name = "O",
     this.coords = [
       [0, 4],
       [0, 5],
@@ -140,6 +141,7 @@ class O extends Tetromino {
 class I extends Tetromino {
   constructor(prevCoords, intervalId) {
     super(prevCoords, intervalId);
+    this.name = "I",
     this.coords = [
       [0, 5],
       [0, 3],
@@ -169,6 +171,7 @@ class I extends Tetromino {
 class T extends Tetromino {
   constructor(prevCoords, intervalId) {
     super(prevCoords, intervalId);
+    this.name = "T",
     this.coords = [
       [0, 4],
       [0, 3],
@@ -181,6 +184,7 @@ class T extends Tetromino {
 class Z extends Tetromino {
   constructor(prevCoords, intervalId) {
     super(prevCoords, intervalId);
+    this.name = "Z",
     this.coords = [
       [0, 4],
       [0, 3],
@@ -193,6 +197,7 @@ class Z extends Tetromino {
 class S extends Tetromino {
   constructor(prevCoords, intervalId) {
     super(prevCoords, intervalId);
+    this.name = "S",
     this.coords = [
       [0, 5],
       [0, 4],
@@ -205,6 +210,7 @@ class S extends Tetromino {
 class J extends Tetromino {
   constructor(prevCoords, intervalId) {
     super(prevCoords, intervalId);
+    this.name = "J",
     this.coords = [
       [0, 4],
       [0, 3],
@@ -217,6 +223,7 @@ class J extends Tetromino {
 class L extends Tetromino {
   constructor(prevCoords, intervalId) {
     super(prevCoords, intervalId);
+    this.name = "L",
     this.coords = [
       [0, 4],
       [0, 3],
@@ -239,24 +246,26 @@ var app = new Vue({
     currentTetromino() {
       return this.tetrominos[this.tetrominos.length - 1];
     },
+    lockedTetrominos() {
+      return this.tetrominos.slice(0, this.tetrominos.length - 1);
+    },
     occupiedCoordinates() {
       let result = [];
       
-      this.tetrominos.map((t) => t.coords)
+      this.tetrominos
+        //.filter(t => t !== this.currentTetromino)
+        .map((t) => t.coords)
         .forEach((c) => result.push(...c));
 
       return result;
     },
     unoccupiedCoordinates() {
       let result = [];
-      let occupiedCoordsAsStrings = this.occupiedCoordinates
-        .map(c => c.toString());
-      
-      this.board.forEach((row, r) => {
+
+      this.board?.forEach((row, r) => {
         row.forEach((col, c) => {
-          let coord = `${r},${c}`;
-          if (!occupiedCoordsAsStrings.includes(coord)) {
-            return result.push([r, c]);
+          if (col === "O") {
+            result.push([r, c]);
           }
         })
       })
@@ -347,19 +356,20 @@ var app = new Vue({
         let placed = this.occupiedCoordinates
           .slice(0, this.occupiedCoordinates.length - 4);
 
-        this.updateBoard(current, "C");
-        this.updateBoard(placed, "P");
-        this.updateBoard(this.unoccupiedCoordinates, "O");
+        this.tetrominos.forEach(t => {
+          let arr = t.coords;
+          let val = t.name;
+
+          this.updateBoard(arr, val);
+        })
+        // this.updateBoard(current, "C");
+        // this.updateBoard(placed, "P");
+        // this.updateBoard(this.unoccupiedCoordinates, "O");
       },
       deep: true,
     },
-    unoccupiedCoordinates: {
-      handler: function() {
-        console.log("UC")
-        this.updateBoard(this.unoccupiedCoordinates, "O")
-      },
-      deep: true
-    },
+    unoccupiedCoordinates
+    
     completedRows: function () {
       //Create a group of the coords remaining above the highest-indexed completed row.
       let numRowsCleared = this.completedRows.length;
