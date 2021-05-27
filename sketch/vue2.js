@@ -151,6 +151,18 @@ var app = new Vue({
     currentTetromino() {
       return this.tetrominos[this.tetrominos.length - 1];
     },
+    ghostCoords() {
+      let [row, col] = this.currentTetromino?._origin;
+      let orientation = this.currentTetromino.orientation;
+
+      while (this.currentTetromino
+        .simulatePosition([row, col], orientation, this.board)) {
+        row++
+      }
+      
+
+      return this.currentTetromino.mapToCoords([row - 1dd, col], orientation).map(c => c.toString());
+    }
   },
   methods: {
     build() {
@@ -191,17 +203,18 @@ var app = new Vue({
     getOverheadBlockCoords(rowIdx) {
       //For use during line clears.
       let overheadBlocks = [];
-
-      //Compute coords for blocks above given rowIdx.
+      
+      //Compute coords for all cells in rows containing blocks above given rowIdx.
       this.board
-        .filter((row) => this.board.indexOf(row) < rowIdx)
-        .filter((row) => row.some((col) => col))
+        .filter((row) => {
+          return this.board.indexOf(row) < rowIdx && row.some((col) => col)
+        })
         .forEach((row) => {
+          let r = this.board.indexOf(row);
           row.forEach((col, c) => {
-            let r = this.board.indexOf(row);
-            if (col) return overheadBlocks.push([r, c]);
-          });
-        });
+            overheadBlocks.push([r, c]);
+          })
+        })
 
       //Sort from lowest row to highest row.
       overheadBlocks.reverse();
@@ -227,26 +240,16 @@ var app = new Vue({
       //Find and set new coords for each overhead block.
       overheadBlocks.forEach((coord) => {
         let [row, col] = coord;
-        let char = this.board[row][col];
+
+        let char;
+        if (this.board[row][col]) {
+          char = this.board[row][col];
+        } else {
+          char = '';
+        }
 
         this.$set(this.board[row], col, "");
         this.$set(this.board[row + numRows], col, char);
-
-        // let r = row + 1;
-        // let set = false;
-        // while (r < this.board.length) {
-        //   if (this.board[r][col] && !set) {
-        //     this.$set(this.board[row], col, "");
-        //     this.$set(this.board[r - 1], col, char);
-        //     set = true;
-        //   }
-        //   r++;
-        // }
-
-        // if (!set) {
-        //   this.$set(this.board[row], col, "");
-        //   coord = this.$set(this.board[r - 1], col, char);
-        // }
       });
     },
     lineClear(completedRows) {
@@ -299,7 +302,9 @@ var app = new Vue({
             if (this.statusOfCurrentTetromino() === "locked") {
               let completedRows = this.getCompletedRows();
            
-              this.lineClear(completedRows);
+              if (completedRows.length) {
+                this.lineClear(completedRows);
+              }
            
               clearInterval(this.currentTetromino._interval);
               this.addTetromino();

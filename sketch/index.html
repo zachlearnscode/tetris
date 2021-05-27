@@ -22,35 +22,39 @@
         border: 0.5px solid black;
       }
       .empty {
-        background-color: lightgrey;
+        background-color: black;
+        border: none;
       }
       .I {
         background-color: cyan;
-        border: 0.5px inset black;
+        border: outset cyan;
       }
       .J {
         background-color: blue;
-        border: 0.5px inset black;
+        border: outset blue;
       }
       .L {
         background-color: orange;
-        border: 0.5px inset black;
+        border: outset orange;
       }
       .O {
         background-color: yellow;
-        border: 0.5px inset black;
+        border: outset yellow;
       }
       .S {
         background-color: green;
-        border: 0.5px inset black;
+        border: outset green;
       }
       .T {
         background-color: purple;
-        border: 0.5px inset black;
+        border: outset purple;
       }
       .Z {
         background-color: red;
-        border: 0.5px inset black;
+        border: outset red;
+      }
+      .G {
+        border: outset white;
       }
     </style>
 
@@ -63,7 +67,7 @@
           v-for="(col, c) in row"
           
           class="cell"
-          :class="col === '' ? 'empty' : col"
+          :class="[col === '' ? 'empty' : col, ghostCoords.includes(`${r},${c}`) ? 'G' : '']"
           ></div
         >
       </div>
