@@ -220,35 +220,38 @@ var app = new Vue({
         this.board[r].forEach((c, i) => this.$set(this.board[r], i, ""));
       });
     },
-    dropOverheadBlocks(deepestCompletedRow) {
-      //debugger;
-      let overheadBlocks = this.getOverheadBlockCoords(deepestCompletedRow);
+    dropOverheadBlocks(clearedRows) {
+      let numRows = clearedRows.length;
+      let overheadBlocks = this.getOverheadBlockCoords(Math.max(...clearedRows));
 
       //Find and set new coords for each overhead block.
       overheadBlocks.forEach((coord) => {
         let [row, col] = coord;
         let char = this.board[row][col];
 
-        let r = row + 1;
-        let set = false;
-        while (r < this.board.length) {
-          if (this.board[r][col] && !set) {
-            this.$set(this.board[row], col, "");
-            this.$set(this.board[r - 1], col, char);
-            set = true;
-          }
-          r++;
-        }
+        this.$set(this.board[row], col, "");
+        this.$set(this.board[row + numRows], col, char);
 
-        if (!set) {
-          this.$set(this.board[row], col, "");
-          coord = this.$set(this.board[r - 1], col, char);
-        }
+        // let r = row + 1;
+        // let set = false;
+        // while (r < this.board.length) {
+        //   if (this.board[r][col] && !set) {
+        //     this.$set(this.board[row], col, "");
+        //     this.$set(this.board[r - 1], col, char);
+        //     set = true;
+        //   }
+        //   r++;
+        // }
+
+        // if (!set) {
+        //   this.$set(this.board[row], col, "");
+        //   coord = this.$set(this.board[r - 1], col, char);
+        // }
       });
     },
     lineClear(completedRows) {
       this.clearCompletedRows(completedRows);
-      this.dropOverheadBlocks(Math.max(...completedRows));
+      this.dropOverheadBlocks(completedRows);
     },
     updateBoard(coords, val = "") {
       coords.forEach((c) => {
@@ -293,17 +296,20 @@ var app = new Vue({
 
         if (this.statusOfCurrentTetromino() === "locked") {
           this.timeout = setTimeout(() => {
-            let completedRows = this.getCompletedRows();
-          
-            while (completedRows.length) {
+            if (this.statusOfCurrentTetromino() === "locked") {
+              let completedRows = this.getCompletedRows();
+           
               this.lineClear(completedRows);
-              completedRows = this.getCompletedRows();
-            }
-            
-            clearInterval(this.currentTetromino._interval);
-            this.addTetromino();
+           
+              clearInterval(this.currentTetromino._interval);
+              this.addTetromino();
 
-            clearTimeout(this.timeout);
+              clearTimeout(this.timeout);
+            } else{
+              return
+            }
+
+            
           }, 500)          
         }
       },
