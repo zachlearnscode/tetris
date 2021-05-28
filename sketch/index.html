@@ -15,46 +15,47 @@
         width: 100px;
         height: 10px;
         display:flex;
+        background-color: #1A237E;
       }
       .cell {
         display:inline;
         aspect-ratio: 1 / 1;
-        border: 0.5px solid black;
       }
       .empty {
-        background-color: black;
+        
         border: none;
       }
       .I {
-        background-color: cyan;
-        border: outset cyan;
+        background-color: #26C6DA;
+        border: .5px solid #00ACC1;
       }
       .J {
-        background-color: blue;
-        border: outset blue;
+        background-color: #42A5F5;
+        border: .5px solid #1E88E5;
       }
       .L {
-        background-color: orange;
-        border: outset orange;
+        background-color: #FFA726;
+        border: .5px solid #FB8C00;
       }
       .O {
-        background-color: yellow;
-        border: outset yellow;
+        background-color: #FFEE58;
+        border: .5px solid #FDD835;
       }
       .S {
-        background-color: green;
-        border: outset green;
+        background-color: #66BB6A;
+        border: .5px solid #43A047;
       }
       .T {
-        background-color: purple;
-        border: outset purple;
+        background-color: #AB47BC;
+        border: .5px solid #8E24AA;
       }
       .Z {
-        background-color: red;
-        border: outset red;
+        background-color: #EF5350;
+        border: .5px solid #E53935;
       }
       .G {
-        border: outset white;
+        background-color: rgba(255, 255, 255, .10);
+        border: .5px solid rgba(255, 255, 255, .10);
       }
     </style>
 
@@ -67,7 +68,7 @@
           v-for="(col, c) in row"
           
           class="cell"
-          :class="[col === '' ? 'empty' : col, ghostCoords.includes(`${r},${c}`) ? 'G' : '']"
+          :class="[col, ghostOfCurrentTetromino.includes(`${r},${c}`) && !currentTetromino.mapToCoords().map(c => c.toString()).includes(`${r},${c}`) ? 'G' : '']"
           ></div
         >
       </div>

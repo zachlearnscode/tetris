@@ -151,17 +151,11 @@ var app = new Vue({
     currentTetromino() {
       return this.tetrominos[this.tetrominos.length - 1];
     },
-    ghostCoords() {
-      let [row, col] = this.currentTetromino?._origin;
-      let orientation = this.currentTetromino.orientation;
+    ghostOfCurrentTetromino() {
+      let maxOrigin = this.currentTetromino.getMaxOrigin(this.board);
+      let ghostCoords = this.currentTetromino.mapToCoords(maxOrigin);
 
-      while (this.currentTetromino
-        .simulatePosition([row, col], orientation, this.board)) {
-        row++
-      }
-      
-
-      return this.currentTetromino.mapToCoords([row - 1dd, col], orientation).map(c => c.toString());
+      return ghostCoords.map(c => c.toString())
     }
   },
   methods: {

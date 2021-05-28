@@ -34,6 +34,20 @@ export class Tetromino {
     return;
   }
 
+  getMaxOrigin(board) {
+    let [row, col] = this._origin;
+    let orientation = this.orientation;
+
+    row++;
+    while (this.simulatePosition([row, col], orientation, board)) {
+      row++;
+    }
+
+    let maxOrigin = [row - 1, col];
+
+    return maxOrigin
+  }
+
   move(dir, board) {
     switch (dir) {
       case "D": {
@@ -66,9 +80,12 @@ export class Tetromino {
   }
   
   simulatePosition(origin, orientation, board) {
-    // Accept a requested origin or orientation and the current board to simulate a requested position
-    // for the tetromino. Ensure that requested position won't move the tetromino out of bounds and won't
-    // collide with an already-placed piece. Exclude the tetromino's current coordinates on the board.
+    // Accept a requested origin or orientation and the current board
+    //to simulate a requested position for the tetromino.
+    //Ensure that requested position won't move the tetromino out of bounds
+    //and won't collide with an already-placed piece.
+    //Exclude the tetromino's current  coordinates on the board.
+
     let result = true;
 
     let coordsNow = this.mapToCoords().map(c => c.toString());
