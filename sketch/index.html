@@ -11,6 +11,9 @@
         font-family: "Courier New", Courier, monospace;
         box-sizing: border-box;
       }
+      #app {
+        display: flex;
+      }
       .row {
         width: 100px;
         height: 10px;
@@ -20,10 +23,6 @@
       .cell {
         display:inline;
         aspect-ratio: 1 / 1;
-      }
-      .empty {
-        
-        border: none;
       }
       .I {
         background-color: #26C6DA;
@@ -63,14 +62,19 @@
   </head>
   <body>
     <div id="app">
-      <div v-for="(row, r) in board" class="row">
-        <div
-          v-for="(col, c) in row"
-          
-          class="cell"
-          :class="[col, ghostOfCurrentTetromino.includes(`${r},${c}`) && !currentTetromino.mapToCoords().map(c => c.toString()).includes(`${r},${c}`) ? 'G' : '']"
-          ></div
-        >
+      <div>
+        <div v-for="(row, r) in board" class="row">
+          <div
+            v-for="(col, c) in row"
+            
+            class="cell"
+            :class="[col, ghostOfCurrentTetromino.includes(`${r},${c}`) && !currentTetromino.mapToCoords().map(c => c.toString()).includes(`${r},${c}`) ? 'G' : '']"
+            ></div
+          >
+        </div>
+        <div>
+          <span>Level: {{currentLevel}}</span>
+        </div>
       </div>
     </div>
 
