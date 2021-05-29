@@ -146,6 +146,7 @@ var app = new Vue({
     board: undefined,
     tetrominos: [],
     timeout: null,
+    addTetrominoTimeout: null,
     hardDropped: false,
     linesCleared: 0
   },
@@ -197,14 +198,34 @@ var app = new Vue({
       let randomIdx = Math.floor(Math.random() * 7);
 
       let newTetromino = tetrominos[randomIdx];
+
+      if (this.currentTetromino) {
+        clearInterval(this.currentTetromino._interval);
+      }
+
       newTetromino._interval = setInterval(() => {
         newTetromino.move("D", this.board)
       }, this.speedCurve)
 
       this.tetrominos.push(newTetromino);
     },
-    pause() {
-      clearInterval(app.currentTetromino._interval);
+    lineClear(completedRows) {
+      this.linesCleared += completedRows.length;
+
+      this.clearCompletedRows(completedRows);
+      this.dropOverheadBlocks(completedRows);
+    },
+    getCompletedRows() {
+      let completedRows = this.board
+        .filter((row) => row.every((col) => col))
+        .map((completedRow) => this.board.indexOf(completedRow));
+
+      return completedRows;
+    },
+    clearCompletedRows(completedRows) {
+      return completedRows.forEach((r) => {
+        this.board[r].forEach((c, i) => this.$set(this.board[r], i, ""));
+      });
     },
     getOverheadBlockCoords(rowIdx) {
       //For use during line clears.
@@ -227,18 +248,6 @@ var app = new Vue({
 
       return overheadBlocks;
     },
-    getCompletedRows() {
-      let completedRows = this.board
-        .filter((row) => row.every((col) => col))
-        .map((completedRow) => this.board.indexOf(completedRow));
-
-      return completedRows;
-    },
-    clearCompletedRows(completedRows) {
-      return completedRows.forEach((r) => {
-        this.board[r].forEach((c, i) => this.$set(this.board[r], i, ""));
-      });
-    },
     dropOverheadBlocks(clearedRows) {
       let numRows = clearedRows.length;
       let overheadBlocks = this.getOverheadBlockCoords(Math.max(...clearedRows));
@@ -256,17 +265,6 @@ var app = new Vue({
 
         this.$set(this.board[row], col, "");
         this.$set(this.board[row + numRows], col, char);
-      });
-    },
-    lineClear(completedRows) {
-      this.clearCompletedRows(completedRows);
-      this.dropOverheadBlocks(completedRows);
-    },
-    updateBoard(coords, val = "") {
-      coords.forEach((c) => {
-        let [row, col] = c;
-
-        this.$set(this.board[row], col, val);
       });
     },
     inLockedPosition() {
@@ -288,38 +286,28 @@ var app = new Vue({
 
       return result;
     },
-    hardDrop() {
-      this.hardDropped = true;
-      this.updateBoard(this.currentTetromino.mapToCoords(), "")
-      this.currentTetromino._origin = this.currentTetromino.getMaxOrigin(this.board);
-    },
     lockCurrentTetromino() {
-      let lineClearingProcedure = () => {
-        let completedRows = this.getCompletedRows();
-       
-        if (completedRows.length) {
-          this.linesCleared += completedRows.length;
-          this.lineClear(completedRows);
-        }
-      
-        clearInterval(this.currentTetromino._interval);
-        this.addTetromino();
-      }
-
-      //If the currentTetromino was soft-dropped, allow 
-      //a lock delay before clearing lines and adding a tetromino.
-      if (!this.hardDropped) {
-        this.timeout = setTimeout(() => {
-          if (this.inLockedPosition()) {
-            lineClearingProcedure();
+      //Create lock delay before locking tetromino.
+      //Lock delay void if tetromino was hard-dropped --
+      //hard-drop tracked in Tetromino move method.
+      this.timeout = setTimeout(() => {
+        if (this.inLockedPosition()) {
+          let completedRows = this.getCompletedRows();
+          if (completedRows.length) {
+            this.lineClear(completedRows);
           }
-          clearTimeout(this.timeout);
-        }, this.speedCurve);
-      } else { // Else if the currentTetromino was hard-dropped, lock it instantly.
-        lineClearingProcedure();
-        this.hardDropped = false;
-      }
-    }
+          this.addTetromino();
+        }
+        clearTimeout(this.timeout);
+      }, this.speedCurve);
+    },
+    updateBoard(coords, val = "") {
+      coords.forEach((c) => {
+        let [row, col] = c;
+
+        this.$set(this.board[row], col, val);
+      });
+    },
   },
   watch: {
     currentTetromino: {
@@ -360,7 +348,7 @@ var app = new Vue({
       } else if (e.key === "s") {
           this.currentTetromino.move("D", this.board);
       } else if (e.key === "e") {
-          this.hardDrop()
+          this.currentTetromino.move("HD", this.board);
       }
 
       e.preventDefault();
