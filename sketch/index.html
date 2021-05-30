@@ -56,12 +56,33 @@
         background-color: rgba(255, 255, 255, .10);
         border: .5px solid rgba(255, 255, 255, .10);
       }
+      .previewTetromino {
+        margin: 10px 0;
+      }
+      .previewRow {
+        width: 75px;
+        height: 7.5px;
+        display: flex;
+        margin: auto;
+      }
     </style>
 
     <title>Tetris Sketch</title>
   </head>
   <body>
     <div id="app">
+      <div>
+        <div v-for="(row, r) in heldTetromino?.orientation.filter(r => r.some(c => c))" class="previewRow">
+          <div
+            v-for="(col, c) in row"
+            
+            class="cell"
+            :class="[col]"
+            ></div
+          >
+        </div>
+        <div>Hold</div>
+      </div>
       <div>
         <div v-for="(row, r) in board" class="row">
           <div
@@ -72,9 +93,22 @@
             ></div
           >
         </div>
+      </div>
+      <div>
         <div>
-          <span>Level: {{currentLevel}}</span>
+          <div v-for="(tetromino, i) in upcomingTetrominos" :key="i" class="previewTetromino">
+            <div v-for="(row, r) in tetromino.orientation.filter(r => r.some(c => c))" class="previewRow">
+              <div
+                v-for="(col, c) in row"
+                
+                class="cell"
+                :class="[col]"
+                ></div
+              >
+            </div>
+          </div>
         </div>
+        <span>Level: {{currentLevel}}</span>
       </div>
     </div>
 

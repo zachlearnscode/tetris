@@ -5,7 +5,9 @@ export class Tetromino {
     this._origin = origin,
     this._orientations = orientations,
     this._prevCoords = undefined,
+
     this._hardDropped = false,
+    this._onHold = false,
 
     this._interval = undefined
   }

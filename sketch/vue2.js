@@ -145,10 +145,11 @@ var app = new Vue({
   data: {
     board: undefined,
     tetrominos: [],
+    heldTetromino: undefined,
     timeout: null,
     addTetrominoTimeout: null,
     hardDropped: false,
-    linesCleared: 0
+    linesCleared: 0,
   },
   computed: {
     currentTetromino() {
@@ -158,18 +159,26 @@ var app = new Vue({
       let maxOrigin = this.currentTetromino.getMaxOrigin(this.board);
       let ghostCoords = this.currentTetromino.mapToCoords(maxOrigin);
 
-      return ghostCoords.map(c => c.toString())
+      return ghostCoords.map((c) => c.toString());
+    },
+    upcomingTetrominos() {
+      let idx = this.tetrominos.indexOf(this.currentTetromino);
+
+      return this.tetrominos.slice(idx - 4, idx).reverse();
     },
     currentLevel() {
       return parseInt(this.linesCleared / 10) + 1;
     },
     speedCurve() {
-      let seconds = Math.pow(0.8 - ((this.currentLevel - 1) * 0.007), this.currentLevel - 1);
+      let seconds = Math.pow(
+        0.8 - (this.currentLevel - 1) * 0.007,
+        this.currentLevel - 1
+      );
       return 1000 * seconds;
     },
     gameOver() {
       return !this.currentTetromino?._prevCoords && this.inLockedPosition();
-    }
+    },
   },
   methods: {
     build() {
@@ -197,17 +206,7 @@ var app = new Vue({
       ];
       let randomIdx = Math.floor(Math.random() * 7);
 
-      let newTetromino = tetrominos[randomIdx];
-
-      if (this.currentTetromino) {
-        clearInterval(this.currentTetromino._interval);
-      }
-
-      newTetromino._interval = setInterval(() => {
-        newTetromino.move("D", this.board)
-      }, this.speedCurve)
-
-      this.tetrominos.push(newTetromino);
+      this.tetrominos.unshift(tetrominos[randomIdx]);
     },
     lineClear(completedRows) {
       this.linesCleared += completedRows.length;
@@ -230,18 +229,18 @@ var app = new Vue({
     getOverheadBlockCoords(rowIdx) {
       //For use during line clears.
       let overheadBlocks = [];
-      
+
       //Compute coords for all cells in rows containing blocks above given rowIdx.
       this.board
         .filter((row) => {
-          return this.board.indexOf(row) < rowIdx && row.some((col) => col)
+          return this.board.indexOf(row) < rowIdx && row.some((col) => col);
         })
         .forEach((row) => {
           let r = this.board.indexOf(row);
           row.forEach((col, c) => {
             overheadBlocks.push([r, c]);
-          })
-        })
+          });
+        });
 
       //Sort from lowest row to highest row.
       overheadBlocks.reverse();
@@ -250,7 +249,9 @@ var app = new Vue({
     },
     dropOverheadBlocks(clearedRows) {
       let numRows = clearedRows.length;
-      let overheadBlocks = this.getOverheadBlockCoords(Math.max(...clearedRows));
+      let overheadBlocks = this.getOverheadBlockCoords(
+        Math.max(...clearedRows)
+      );
 
       //Find and set new coords for each overhead block.
       overheadBlocks.forEach((coord) => {
@@ -260,7 +261,7 @@ var app = new Vue({
         if (this.board[row][col]) {
           char = this.board[row][col];
         } else {
-          char = '';
+          char = "";
         }
 
         this.$set(this.board[row], col, "");
@@ -271,14 +272,17 @@ var app = new Vue({
       let result = false;
 
       let coords = this.currentTetromino?.mapToCoords();
-      let strCoords = coords?.map(c => c.toString());
+      let strCoords = coords?.map((c) => c.toString());
 
       coords?.forEach((c) => {
         let [row, col] = c;
         if (row === this.board.length - 1) {
           result = true;
         } else if (this.board[row + 1]) {
-          if (this.board[row + 1][col] && !strCoords.includes(`${row + 1},${col}`)) {
+          if (
+            this.board[row + 1][col] &&
+            !strCoords.includes(`${row + 1},${col}`)
+          ) {
             result = true;
           }
         }
@@ -296,10 +300,39 @@ var app = new Vue({
           if (completedRows.length) {
             this.lineClear(completedRows);
           }
-          this.addTetromino();
+          clearInterval(this.currentTetromino._interval);
+          this.tetrominos = this.tetrominos.slice(
+            0,
+            this.tetrominos.length - 1
+          );
+          if (this.heldTetromino) {
+            this.heldTetromino._onHold = false;
+          }
         }
         clearTimeout(this.timeout);
       }, this.speedCurve);
+    },
+    holdTetromino() {
+      let toHold = this.currentTetromino;
+
+      if (this.heldTetromino) {
+        if (!this.heldTetromino._onHold) {
+          let toPush = this.heldTetromino;
+          toHold._interval = clearInterval(toHold._interval);
+          this.tetrominos = this.tetrominos.slice(0, this.tetrominos.length - 1);
+          this.tetrominos.push(toPush);
+          this.heldTetromino = toHold;
+          this.heldTetromino._onHold = true;
+          this.updateBoard(this.heldTetromino.mapToCoords())
+        }
+      } else {
+        this.tetrominos = this.tetrominos.slice(0, this.tetrominos.length - 1)
+        toHold._interval = clearInterval(toHold._interval);
+        clearInterval(toHold._interval);
+        this.heldTetromino = toHold;
+        this.heldTetromino._onHold = true;
+        this.updateBoard(this.heldTetromino.mapToCoords())
+      }
     },
     updateBoard(coords, val = "") {
       coords.forEach((c) => {
@@ -312,6 +345,11 @@ var app = new Vue({
   watch: {
     currentTetromino: {
       handler: function () {
+        if (!this.currentTetromino._interval) {
+          this.currentTetromino._interval = setInterval(() => {
+            this.currentTetromino.move("D", this.board);
+          }, this.speedCurve);
+        }
         let prevCoords = this.currentTetromino._prevCoords;
         let currCoords = this.currentTetromino.mapToCoords();
 
@@ -319,36 +357,47 @@ var app = new Vue({
         this.updateBoard(currCoords, this.currentTetromino.name);
 
         if (!this.gameOver) {
-          if (this.inLockedPosition()) { 
+          if (this.inLockedPosition()) {
             this.lockCurrentTetromino();
           }
         }
       },
       deep: true,
     },
-    gameOver: function() {
+    tetrominos: function () {
+      if (this.tetrominos.length < 10) {
+        while (this.tetrominos.length < 100) {
+          this.addTetromino();
+        }
+      }
+    },
+    gameOver: function () {
       if (this.gameOver) {
         clearInterval(this.currentTetromino._interval);
         console.log("Game Over");
       }
-    }
+    },
   },
 
   created() {
     this.board = this.build();
-    this.addTetromino();
+    while (this.tetrominos.length < 100) {
+      this.addTetromino();
+    }
 
     window.addEventListener("keydown", (e) => {
       if (e.key === "w") {
-          this.currentTetromino.orientation = { dir: "CW", board: this.board };
+        this.currentTetromino.orientation = { dir: "CW", board: this.board };
       } else if (e.key === "a") {
-          this.currentTetromino.move("L", this.board);
+        this.currentTetromino.move("L", this.board);
       } else if (e.key === "d") {
-          this.currentTetromino.move("R", this.board);
+        this.currentTetromino.move("R", this.board);
       } else if (e.key === "s") {
-          this.currentTetromino.move("D", this.board);
+        this.currentTetromino.move("D", this.board);
       } else if (e.key === "e") {
-          this.currentTetromino.move("HD", this.board);
+        this.currentTetromino.move("HD", this.board);
+      } else if (e.key === "h") {
+        this.holdTetromino();
       }
 
       e.preventDefault();
