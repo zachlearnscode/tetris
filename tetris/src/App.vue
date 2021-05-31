@@ -1,55 +1,35 @@
 <template>
-  <div id="app">
-    <div v-for="(row, r) in board" :key="r">
-      <div v-for="(col, c) in row" :key="(r * 10) + c" class="cell">{{col}}</div>
-    </div>
-  </div>
+  <v-app>
+    <v-main class="d-flex justify-center align-center">
+      <v-container :fluid="screenSize === 'xs'">
+        <v-row>
+          <v-col class="d-flex justify-center align-center">
+            <board></board>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-main>
+  </v-app>
 </template>
 
 <script>
+import Board from './components/Board.vue';
+
 export default {
-  name: "App",
-  components: {},
+  name: 'App',
 
-  data() {
-    return {
-      board: undefined,
-      tetrominos: [],
-    };
+  components: {
+    Board
   },
 
-  methods: {
-    buildBoard() {
-      let board = [];
+  data: () => ({
+    //
+  }),
 
-      for (let r = 0; r < 20; r++) {
-        let row = [];
-        for (let c = 0; c < 10; c++) {
-          row[c] = "O";
-        }
-        board[r] = row;
-      }
-
-      return board;
-    },
-  },
-
-  created() {
-    this.board = this.buildBoard();
+  computed: {
+    screenSize() {
+      return this.$vuetify.breakpoint.name;
+    }
   }
 };
 </script>
-
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  /* text-align: center; */
-  color: #2c3e50;
-  /* margin-top: 60px; */
-}
-.cell {
-  display: inline;
-}
-</style>
