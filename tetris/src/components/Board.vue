@@ -1,9 +1,9 @@
 <template>
-  <v-container class="d-flex flex-column align-center">
-    <v-row v-for="(row, r) in boardDisplay" :key="r">
-      <v-col cols="auto" v-for="(col, c) in row" :key="(r * 10) + c" class="cell">{{col}}</v-col>
-    </v-row>
-  </v-container>
+  <div class="container d-flex justify-center align-center">
+    <div v-for="(row, r) in boardDisplay" :key="r" class="row">
+      <div v-for="(col, c) in row" :key="(r * 10) + c" class="cell">{{col}}</div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -67,6 +67,14 @@ export default {
     },
   },
 
+  watch: {
+    tetrominos: function() {
+      if (this.tetrominos.length < 5) {
+        this.tetrominos = this.queueTetrominos(this.tetrominos);
+      }
+    }
+  },
+
   created() {
     this.board = this.build();
     this.tetrominos = this.queueTetrominos();
@@ -75,9 +83,25 @@ export default {
 </script>
 
 <style scoped>
+.container {
+  height:75vh;
+  width:calc(75vh / 2);
+  display:flex;
+  flex-direction: column;
+  margin: auto;
+  box-sizing: content-box;
+  border: 5px solid black;
+  border-radius: 3px;
+}
+.row {
+  width:100%;
+  height:calc(100% / 20);
+  display: flex;
+}
 .cell {
-  /* display: inline; */
-  /* aspect-ratio: 1/1; */
-  background-color: blue;
+  display: inline;
+  aspect-ratio: 1/1;
+  background-color: #1A237E;
+
 }
 </style>

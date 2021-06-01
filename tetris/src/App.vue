@@ -1,13 +1,9 @@
 <template>
   <v-app>
     <v-main class="d-flex justify-center align-center">
-      <v-container :fluid="screenSize === 'xs'">
-        <v-row>
-          <v-col class="d-flex justify-center align-center">
-            <board></board>
-          </v-col>
-        </v-row>
-      </v-container>
+      
+      <board></board>
+
     </v-main>
   </v-app>
 </template>
