@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-main class="d-flex justify-center align-center">
+    <v-main class="d-flex justify-center align-center indigo">
       
       <board></board>
 

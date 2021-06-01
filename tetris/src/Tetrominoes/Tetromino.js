@@ -4,12 +4,15 @@ export class Tetromino {
 
     this._origin = origin,
     this._orientations = orientations,
-    this._prevCoords = undefined,
+
+    this._prevOrigin = undefined,
+    this._prevOrientation = undefined,
 
     this._hardDropped = false,
     this._onHold = false,
 
-    this._interval = undefined
+    this._interval = undefined,
+    this._lockDelay = undefined
   }
 
   get orientation() {
@@ -30,11 +33,19 @@ export class Tetromino {
     let orientationIsValid = this.simulatePosition(this._origin, requestedOrientation[0], board);
 
     if (orientationIsValid) {
-      this._prevCoords = this.mapToCoords();
+      this._prevOrientation = this.orientation;
       return this._orientations = requestedOrientation;
     }
 
     return;
+  }
+
+  get currentCoords() {
+    return this.mapToCoords();
+  }
+
+  get previousCoords() {
+    return this.mapToCoords(this._prevOrigin);
   }
 
   getMaxOrigin(board) {
@@ -90,7 +101,7 @@ export class Tetromino {
       if (dir === "HD") {
         this._hardDropped = true;
       }
-      this._prevCoords = this.mapToCoords();
+      this._prevOrigin = this._origin;
       return this._origin = requestedOrigin;
     }
 
