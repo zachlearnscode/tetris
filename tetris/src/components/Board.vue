@@ -5,7 +5,7 @@
         v-for="(col, c) in row"
         :key="r * 10 + c"
         class="cell"
-        :class="[col, ghostCoords.map(c => c.toString()).includes(`${r},${c}`) && !currentTetromino.currentCoords.map(c => c.toString()).includes(`${r - 2},${c - 2}`) ? 'G' : '']"
+        :class="[col, ghostCoords.map(c => c.toString()).includes(`${r},${c}`) && !currentTetromino.currentCoords.map(c => c.toString()).includes(`${r + 2},${c}`) ? 'G' : '']"
       ></div>
     </div>
   </div>
@@ -21,14 +21,15 @@ import { T } from "../Tetrominoes/T.js";
 import { O } from "../Tetrominoes/O.js";
 
 export default {
-  props: ['rotateCW', 'rotateCCW'],
+  props: ['rotateCW', 'rotateCCW', 'moveRight', 'moveLeft', 'hardDrop'],
 
   data() {
     return {
       board: undefined,
       tetrominos: [],
       linesCleared: 0,
-      lockDelay: null,
+      moveRightInt: null,
+      moveLeftInt: null
     };
   },
 
@@ -232,6 +233,21 @@ export default {
       if (this.rotateCCW) {
         // console.log("Hello")
         this.currentTetromino.orientation = {dir: "CCW", board: this.board}
+      }
+    },
+    moveRight: function() {
+      if (this.moveRight) {
+        this.currentTetromino.move("R", this.board)
+      }
+    },
+    moveLeft: function() {
+      if (this.moveLeft) {
+        this.currentTetromino.move("L", this.board)
+      }
+    },
+    hardDrop: function() {
+      if (this.hardDrop) {
+        this.currentTetromino.move("HD", this.board)
       }
     }
   },
