@@ -5,7 +5,7 @@
         v-for="(col, c) in row"
         :key="r * 10 + c"
         class="cell"
-        :class="col"
+        :class="[col, ghostCoords.map(c => c.toString()).includes(`${r},${c}`) && !currentTetromino.currentCoords.map(c => c.toString()).includes(`${r - 2},${c - 2}`) ? 'G' : '']"
       ></div>
     </div>
   </div>
@@ -21,6 +21,8 @@ import { T } from "../Tetrominoes/T.js";
 import { O } from "../Tetrominoes/O.js";
 
 export default {
+  props: ['rotateCW', 'rotateCCW'],
+
   data() {
     return {
       board: undefined,
@@ -36,6 +38,12 @@ export default {
     },
     currentTetromino() {
       return this.tetrominos[this.tetrominos.length - 1];
+    },
+    ghostCoords() {
+      let [maxRow, maxCol] = this.currentTetromino
+        .getMaxOrigin(this.board);
+
+      return this.currentTetromino.mapToCoords([maxRow - 2, maxCol]);
     },
     inLockedPosition() {
       let currentCoords = this.currentTetromino.mapToCoords();
@@ -184,8 +192,8 @@ export default {
             this.currentTetromino.move("D", this.board);
           }, this.speedCurve);
         }
-        let prevCoords = this.currentTetromino.mapToCoords(this.currentTetromino._prevOrigin, this.currentTetromino._prevOrientation);
-        let currCoords = this.currentTetromino.mapToCoords();
+        let prevCoords = this.currentTetromino.previousCoords;
+        let currCoords = this.currentTetromino.currentCoords;
 
         if (prevCoords) this.updateBoard(prevCoords);
         this.updateBoard(currCoords, this.currentTetromino.name);
@@ -194,9 +202,13 @@ export default {
           if (this.inLockedPosition && !this.currentTetromino._lockDelay) {
             this.currentTetromino._lockDelay = setTimeout(() => {
               if (this.inLockedPosition) {
+                this.currentTetromino._interval = clearInterval(this.currentTetromino._interval);
+                if (this.completedRows.length) {
+                  this.lineClear();
+                }
                 this.tetrominos = this.tetrominos.slice(0, this.tetrominos.length - 1);
               }
-            }, 1000);
+            }, this.speedCurve);
           }
         }
       },
@@ -210,6 +222,18 @@ export default {
     completedRows: function () {
       this.linesCleared += this.completedRows.length;
     },
+    rotateCW: function() {
+      if (this.rotateCW) {
+        // console.log("Hello")
+        this.currentTetromino.orientation = {dir: "CW", board: this.board}
+      }
+    },
+    rotateCCW: function() {
+      if (this.rotateCCW) {
+        // console.log("Hello")
+        this.currentTetromino.orientation = {dir: "CCW", board: this.board}
+      }
+    }
   },
 
   created() {

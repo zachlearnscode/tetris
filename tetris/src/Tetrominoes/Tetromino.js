@@ -33,7 +33,9 @@ export class Tetromino {
     let orientationIsValid = this.simulatePosition(this._origin, requestedOrientation[0], board);
 
     if (orientationIsValid) {
+      this._prevOrigin = this._origin;
       this._prevOrientation = this.orientation;
+
       return this._orientations = requestedOrientation;
     }
 
@@ -45,7 +47,7 @@ export class Tetromino {
   }
 
   get previousCoords() {
-    return this.mapToCoords(this._prevOrigin);
+    return this.mapToCoords(this._prevOrigin, this._prevOrientation);
   }
 
   getMaxOrigin(board) {
@@ -102,6 +104,8 @@ export class Tetromino {
         this._hardDropped = true;
       }
       this._prevOrigin = this._origin;
+      this._prevOrientation = this.orientation;
+      
       return this._origin = requestedOrigin;
     }
 
