@@ -7,6 +7,7 @@
       v-tap:start.prevent="start"
       v-tap:end.prevent="end"
       class="d-flex justify-center align-center indigo"
+      style="touch-action:none;"
     >
       <board
         :rotateCW="rotateCW"
