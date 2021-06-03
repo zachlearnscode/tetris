@@ -6,10 +6,10 @@ import Vue2TouchEvents from 'vue2-touch-events'
 Vue.use(Vue2TouchEvents, {
   disableClick: false,
   touchClass: '',
-  tapTolerance: 50,
+  tapTolerance: 3,
   touchHoldTolerance: 100,
-  swipeTolerance: 30,
-  longTapTimeInterval: 100,
+  swipeTolerance: 10,
+  longTapTimeInterval: 400,
   namespace: 'tap'
 })
 

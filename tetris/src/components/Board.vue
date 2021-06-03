@@ -21,7 +21,7 @@ import { T } from "../Tetrominoes/T.js";
 import { O } from "../Tetrominoes/O.js";
 
 export default {
-  props: ['rotateCW', 'rotateCCW', 'moveRight', 'moveLeft', 'hardDrop'],
+  props: ['rotateCW', 'rotateCCW', 'moveRight', 'moveLeft', 'moveDown', 'hardDrop'],
 
   data() {
     return {
@@ -85,6 +85,11 @@ export default {
       );
       return 1000 * seconds;
     },
+    gameOver() {
+      let prevOrigin = this.currentTetromino?._prevOrigin;
+      
+      return !prevOrigin && this.inLockedPosition
+    }
   },
 
   methods: {
@@ -231,7 +236,6 @@ export default {
     },
     rotateCCW: function() {
       if (this.rotateCCW) {
-        // console.log("Hello")
         this.currentTetromino.orientation = {dir: "CCW", board: this.board}
       }
     },
@@ -243,6 +247,11 @@ export default {
     moveLeft: function() {
       if (this.moveLeft) {
         this.currentTetromino.move("L", this.board)
+      }
+    },
+    moveDown: function() {
+      if (this.moveDown) {
+        this.currentTetromino.move("D", this.board)
       }
     },
     hardDrop: function() {

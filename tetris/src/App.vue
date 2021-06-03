@@ -2,9 +2,9 @@
   <v-app>
     <v-main
       v-tap="testFn"
-      v-tap:swipe.down.prevent="swipeDown"
-      v-tap:start.prevent="touchStart"
+      v-tap:swipe.down="swipeDown"
       v-tap:moving="moving"
+      v-tap:start="start"
       v-tap:end="end"
       class="d-flex justify-center align-center indigo"
     >
@@ -14,6 +14,7 @@
         :hardDrop="hardDrop"
         :moveRight="moveRight"
         :moveLeft="moveLeft"
+        :moveDown="moveDown"
       ></board>
     </v-main>
   </v-app>
@@ -35,8 +36,10 @@ export default {
     hardDrop: false,
     moveRight: false,
     moveLeft: false,
+    moveDown: false,
 
-    pageX: undefined
+    touchCoords: undefined,
+    touchCoordsLocked: false
   }),
 
   computed: {
@@ -47,8 +50,8 @@ export default {
       return this.$vuetify.breakpoint.width;
     },
     cellSize() {
-      return document.querySelector('.cell').offsetWidth;
-    }
+      return document.querySelector(".cell").offsetWidth;
+    },
   },
 
   methods: {
@@ -66,51 +69,44 @@ export default {
         this.rotateCW = false;
         this.rotateCCW = false;
       }, 100);
-      // console.log(e.changedTouches)
     },
     swipeDown() {
       this.hardDrop = true;
 
       setTimeout(() => (this.hardDrop = false), 100);
     },
-    touchStart(e) {
-      this.pageX = e.changedTouches[0].pageX;
-      // console.log(e.changedTouches[0])
-    },
     moving(e) {
-      let pos = e.changedTouches[0].pageX;
-      //console.log(pos)
+      //console.log(e)
+      let xPos = e.changedTouches[0].pageX;
+      let yPos = e.changedTouches[0].pageY;
 
-      if (pos >= 0 && pos <= this.screenWidth) {
-        if (!this.pageX) {
-          this.pageX = pos;
-        } else {
-          if (this.pageX - pos < -17) {
-            this.moveRight = true;
-            setTimeout(() => {
-              this.moveRight = false
-            }, 100);
+      if (this.touchCoords[0] - xPos < -17) {
+        this.touchCoords = [xPos, yPos];
+        this.moveRight = true;
 
-            this.pageX = pos;
-          } else if (this.pageX - pos > 17) {
-            this.moveLeft = true;
-            setTimeout(() => {
-              this.moveLeft = false
-            }, 100);
-            this.pageX = pos;
-          }
-        }
+        setTimeout(() => this.moveRight = false, 100);
+      } else if (this.touchCoords[0] - xPos > 17) {
+        this.touchCoords = [xPos, yPos];
+        this.moveLeft = true;
+
+        setTimeout(() => this.moveLeft = false, 100);
+      } else if (this.touchCoords[1] - yPos < -17) {
+        this.touchCoords = [xPos, yPos];
+
+        this.moveDown = true;
+
+        setTimeout(() => this.moveDown = false, 100);
       }
-      // this.pageX = e.changedTouches[0].pageX;
-      // console.log(this.pageX)
+    },
+    start(e) {
+      let xPos = e.changedTouches[0].pageX;
+      let yPos = e.changedTouches[0].pageY;
+
+      this.touchCoords = [xPos, yPos];
     },
     end() {
-      this.pageX = null
+      this.touchCoords = undefined;
     },
-    longTap() {
-      this.moveRight = false;
-      this.moveLeft = false;
-    }
   },
 };
 </script>
