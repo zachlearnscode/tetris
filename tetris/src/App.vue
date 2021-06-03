@@ -2,10 +2,10 @@
   <v-app>
     <v-main
       v-tap="testFn"
-      v-tap:swipe.down="swipeDown"
-      v-tap:moving="moving"
-      v-tap:start="start"
-      v-tap:end="end"
+      v-tap:swipe.down.stop="swipeDown"
+      v-tap:moving.stop="moving"
+      v-tap:start.stop="start"
+      v-tap:end.stop="end"
       class="d-flex justify-center align-center indigo"
     >
       <board
