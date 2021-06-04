@@ -4,7 +4,7 @@ import vuetify from './plugins/vuetify'
 import Vue2TouchEvents from 'vue2-touch-events'
 
 Vue.use(Vue2TouchEvents, {
-  disableClick: false,
+  disableClick: true,
   touchClass: '',
   tapTolerance: 3,
   touchHoldTolerance: 100,

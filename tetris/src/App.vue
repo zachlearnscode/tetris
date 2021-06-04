@@ -7,28 +7,46 @@
       v-tap:start.prevent="start"
       v-tap:end.prevent="end"
       class="d-flex justify-center align-center indigo"
-      style="touch-action:none;"
+      style="touch-action: none"
     >
-      <board
-        :rotateCW="rotateCW"
-        :rotateCCW="rotateCCW"
-        :hardDrop="hardDrop"
-        :moveRight="moveRight"
-        :moveLeft="moveLeft"
-        :moveDown="moveDown"
-      ></board>
+      <v-container class="pa-0">
+        <v-row class="justify-center space-around">
+          <v-col cols="auto" class="pa-0">
+            <on-hold :onHold="onHold"></on-hold>
+          </v-col>
+          <v-col cols="auto" class="pa-0">
+            <board
+              @next-four="nextFour = $event"
+              @on-hold="onHold = $event"
+              :rotateCW="rotateCW"
+              :rotateCCW="rotateCCW"
+              :hardDrop="hardDrop"
+              :moveRight="moveRight"
+              :moveLeft="moveLeft"
+              :moveDown="moveDown"
+            ></board>
+          </v-col>
+          <v-col cols="auto" class="py-0">
+            <next-four :nextFour="nextFour"></next-four>
+          </v-col>
+        </v-row>
+      </v-container>
     </v-main>
   </v-app>
 </template>
 
 <script>
 import Board from "./components/Board.vue";
+import NextFour from "./components/NextFour.vue";
+import OnHold from "./components/OnHold.vue";
 
 export default {
   name: "App",
 
   components: {
     Board,
+    NextFour,
+    OnHold
   },
 
   data: () => ({
@@ -40,7 +58,10 @@ export default {
     moveDown: false,
 
     touchCoords: undefined,
-    touchCoordsLocked: false
+    touchCoordsLocked: false,
+
+    nextFour: undefined,
+    onHold: undefined
   }),
 
   computed: {
@@ -56,6 +77,9 @@ export default {
   },
 
   methods: {
+    testFn2(e) {
+      console.log(e)
+    },
     testFn(e) {
       let touch = e.changedTouches[0];
       let x = touch.screenX;
@@ -85,18 +109,18 @@ export default {
         this.touchCoords = [xPos, yPos];
         this.moveRight = true;
 
-        setTimeout(() => this.moveRight = false, 100);
+        setTimeout(() => (this.moveRight = false), 100);
       } else if (this.touchCoords[0] - xPos > 17) {
         this.touchCoords = [xPos, yPos];
         this.moveLeft = true;
 
-        setTimeout(() => this.moveLeft = false, 100);
+        setTimeout(() => (this.moveLeft = false), 100);
       } else if (this.touchCoords[1] - yPos < -17) {
         this.touchCoords = [xPos, yPos];
 
         this.moveDown = true;
 
-        setTimeout(() => this.moveDown = false, 100);
+        setTimeout(() => (this.moveDown = false), 100);
       }
     },
     start(e) {

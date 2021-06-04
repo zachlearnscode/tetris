@@ -1,11 +1,19 @@
 <template>
-  <div class="container d-flex justify-center align-center">
-    <div v-for="(row, r) in boardDisplay" :key="r" class="row">
+  <div class="contain">
+    <div v-for="(row, r) in boardDisplay" :key="r" class="roww">
       <div
         v-for="(col, c) in row"
         :key="r * 10 + c"
         class="cell"
-        :class="[col, ghostCoords.map(c => c.toString()).includes(`${r},${c}`) && !currentTetromino.currentCoords.map(c => c.toString()).includes(`${r + 2},${c}`) ? 'G' : '']"
+        :class="[
+          col,
+          ghostCoords.map((c) => c.toString()).includes(`${r},${c}`) &&
+          !currentTetromino.currentCoords
+            .map((c) => c.toString())
+            .includes(`${r + 2},${c}`)
+            ? 'G'
+            : '',
+        ]"
       ></div>
     </div>
   </div>
@@ -21,15 +29,23 @@ import { T } from "../Tetrominoes/T.js";
 import { O } from "../Tetrominoes/O.js";
 
 export default {
-  props: ['rotateCW', 'rotateCCW', 'moveRight', 'moveLeft', 'moveDown', 'hardDrop'],
+  props: [
+    "rotateCW",
+    "rotateCCW",
+    "moveRight",
+    "moveLeft",
+    "moveDown",
+    "hardDrop",
+  ],
 
   data() {
     return {
       board: undefined,
       tetrominos: [],
+      heldTetromino: undefined,
       linesCleared: 0,
       moveRightInt: null,
-      moveLeftInt: null
+      moveLeftInt: null,
     };
   },
 
@@ -41,8 +57,7 @@ export default {
       return this.tetrominos[this.tetrominos.length - 1];
     },
     ghostCoords() {
-      let [maxRow, maxCol] = this.currentTetromino
-        .getMaxOrigin(this.board);
+      let [maxRow, maxCol] = this.currentTetromino.getMaxOrigin(this.board);
 
       return this.currentTetromino.mapToCoords([maxRow - 2, maxCol]);
     },
@@ -66,6 +81,7 @@ export default {
 
       return lockedCoords.length > 0;
     },
+
     completedRows() {
       return this.board
         ?.filter((row) => {
@@ -74,6 +90,12 @@ export default {
         .map((completedRow) => {
           return this.board.indexOf(completedRow);
         });
+    },
+
+    nextFourTetrominos() {
+      let idxOfCurrent = this.tetrominos.indexOf(this.currentTetromino);
+
+      return this.tetrominos.slice(idxOfCurrent - 4, idxOfCurrent).reverse();
     },
     currentLevel() {
       return parseInt(this.linesCleared / 10) + 1;
@@ -87,9 +109,9 @@ export default {
     },
     gameOver() {
       let prevOrigin = this.currentTetromino?._prevOrigin;
-      
-      return !prevOrigin && this.inLockedPosition
-    }
+
+      return !prevOrigin && this.inLockedPosition;
+    },
   },
 
   methods: {
@@ -181,6 +203,31 @@ export default {
         this.updateBoard([[row + numRows, col]], val);
       });
     },
+    holdTetromino() {
+      let toHold = this.currentTetromino;
+
+      if (this.heldTetromino) {
+        if (!this.heldTetromino._onHold) {
+          let toPush = this.heldTetromino;
+          toHold._interval = clearInterval(toHold._interval);
+          this.tetrominos = this.tetrominos.slice(
+            0,
+            this.tetrominos.length - 1
+          );
+          this.tetrominos.push(toPush);
+          this.heldTetromino = toHold;
+          this.heldTetromino._onHold = true;
+          this.updateBoard(this.heldTetromino.mapToCoords());
+        }
+      } else {
+        this.tetrominos = this.tetrominos.slice(0, this.tetrominos.length - 1);
+        toHold._interval = clearInterval(toHold._interval);
+        clearInterval(toHold._interval);
+        this.heldTetromino = toHold;
+        this.heldTetromino._onHold = true;
+        this.updateBoard(this.heldTetromino.mapToCoords());
+      }
+    },
     updateBoard(coords, val = "") {
       coords.forEach((c) => {
         let [row, col] = c;
@@ -208,11 +255,19 @@ export default {
           if (this.inLockedPosition && !this.currentTetromino._lockDelay) {
             this.currentTetromino._lockDelay = setTimeout(() => {
               if (this.inLockedPosition) {
-                this.currentTetromino._interval = clearInterval(this.currentTetromino._interval);
+                this.currentTetromino._interval = clearInterval(
+                  this.currentTetromino._interval
+                );
                 if (this.completedRows.length) {
                   this.lineClear();
                 }
-                this.tetrominos = this.tetrominos.slice(0, this.tetrominos.length - 1);
+                if (this.heldTetromino) {
+                  this.heldTetromino._onHold = false;
+                }
+                this.tetrominos = this.tetrominos.slice(
+                  0,
+                  this.tetrominos.length - 1
+                );
               }
             }, this.speedCurve);
           }
@@ -228,48 +283,74 @@ export default {
     completedRows: function () {
       this.linesCleared += this.completedRows.length;
     },
-    rotateCW: function() {
+    heldTetromino: function () {
+      this.$emit("on-hold", this.heldTetromino);
+    },
+    nextFourTetrominos() {
+      this.$emit("next-four", this.nextFourTetrominos);
+    },
+    rotateCW: function () {
       if (this.rotateCW) {
         // console.log("Hello")
-        this.currentTetromino.orientation = {dir: "CW", board: this.board}
+        this.currentTetromino.orientation = { dir: "CW", board: this.board };
       }
     },
-    rotateCCW: function() {
+    rotateCCW: function () {
       if (this.rotateCCW) {
-        this.currentTetromino.orientation = {dir: "CCW", board: this.board}
+        this.currentTetromino.orientation = { dir: "CCW", board: this.board };
       }
     },
-    moveRight: function() {
+    moveRight: function () {
       if (this.moveRight) {
-        this.currentTetromino.move("R", this.board)
+        this.currentTetromino.move("R", this.board);
       }
     },
-    moveLeft: function() {
+    moveLeft: function () {
       if (this.moveLeft) {
-        this.currentTetromino.move("L", this.board)
+        this.currentTetromino.move("L", this.board);
       }
     },
-    moveDown: function() {
+    moveDown: function () {
       if (this.moveDown) {
-        this.currentTetromino.move("D", this.board)
+        this.currentTetromino.move("D", this.board);
       }
     },
-    hardDrop: function() {
+    hardDrop: function () {
       if (this.hardDrop) {
-        this.currentTetromino.move("HD", this.board)
+        this.currentTetromino.move("HD", this.board);
       }
-    }
+    },
   },
 
   created() {
     this.board = this.build();
     this.tetrominos = this.queueTetrominos();
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowUp" || e.key === "xx") {
+        this.currentTetromino.orientation = { dir: "CW", board: this.board };
+      } else if (e.key === "Control" || e.key === "z") {
+        this.currentTetromino.orientation = { dir: "CCW", board: this.board };
+      } else if (e.key === "ArrowLeft") {
+        this.currentTetromino.move("L", this.board);
+      } else if (e.key === "ArrowRight") {
+        this.currentTetromino.move("R", this.board);
+      } else if (e.key === "ArrowDown") {
+        this.currentTetromino.move("D", this.board);
+      } else if (e.key === " ") {
+        this.currentTetromino.move("HD", this.board);
+      } else if (e.key === "Shift" || e.key === "c") {
+        this.holdTetromino();
+      }
+
+      e.preventDefault();
+    });
   },
 };
 </script>
 
-<style scoped>
-.container {
+<style>
+.contain {
   height: 60vh;
   width: calc(60vh / 2);
   display: flex;
@@ -277,7 +358,7 @@ export default {
   margin: auto;
   box-shadow: 0px 0px 30px #8c9eff;
 }
-.row {
+.roww {
   width: 100%;
   height: calc(100% / 20);
   display: flex;
