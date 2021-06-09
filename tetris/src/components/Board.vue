@@ -46,6 +46,7 @@ export default {
       linesCleared: 0,
       moveRightInt: null,
       moveLeftInt: null,
+      lockTimeout: null
     };
   },
 
@@ -134,15 +135,7 @@ export default {
       }
 
       while (arr.length < 100) {
-        let tetrominos = [
-          new J(),
-          new L(),
-          new I(),
-          new Z(),
-          new S(),
-          new T(),
-          new O(),
-        ];
+        let tetrominos = this.generateTetrominos();
         let randomIdx = Math.floor(Math.random() * 7);
 
         arr.unshift(tetrominos[randomIdx]);
@@ -204,28 +197,31 @@ export default {
       });
     },
     holdTetromino() {
-      let toHold = this.currentTetromino;
+      let toHold = this.generateTetrominos().find(
+        (t) => t.name === this.currentTetromino.name
+      );
 
-      if (this.heldTetromino) {
-        if (!this.heldTetromino._onHold) {
-          let toPush = this.heldTetromino;
-          toHold._interval = clearInterval(toHold._interval);
+      if (!this.heldTetromino || !this.heldTetromino._onHold) {
+        this.currentTetromino._interval = clearInterval(
+          this.currentTetromino._interval
+        );
+        this.updateBoard(this.currentTetromino.mapToCoords());
+
+        if (this.heldTetromino) {
+          this.$set(
+            this.tetrominos,
+            this.tetrominos.length - 1,
+            this.heldTetromino
+          );
+        } else {
           this.tetrominos = this.tetrominos.slice(
             0,
             this.tetrominos.length - 1
           );
-          this.tetrominos.push(toPush);
-          this.heldTetromino = toHold;
-          this.heldTetromino._onHold = true;
-          this.updateBoard(this.heldTetromino.mapToCoords());
         }
-      } else {
-        this.tetrominos = this.tetrominos.slice(0, this.tetrominos.length - 1);
-        toHold._interval = clearInterval(toHold._interval);
-        clearInterval(toHold._interval);
+
         this.heldTetromino = toHold;
         this.heldTetromino._onHold = true;
-        this.updateBoard(this.heldTetromino.mapToCoords());
       }
     },
     updateBoard(coords, val = "") {
@@ -234,6 +230,9 @@ export default {
 
         this.$set(this.board[row], col, val);
       });
+    },
+    generateTetrominos() {
+      return [new J(), new L(), new I(), new Z(), new S(), new T(), new O()];
     },
   },
 
@@ -255,19 +254,22 @@ export default {
           if (this.inLockedPosition && !this.currentTetromino._lockDelay) {
             this.currentTetromino._lockDelay = setTimeout(() => {
               if (this.inLockedPosition) {
-                this.currentTetromino._interval = clearInterval(
-                  this.currentTetromino._interval
-                );
-                if (this.completedRows.length) {
-                  this.lineClear();
-                }
-                if (this.heldTetromino) {
-                  this.heldTetromino._onHold = false;
-                }
-                this.tetrominos = this.tetrominos.slice(
-                  0,
-                  this.tetrominos.length - 1
-                );
+                this.$nextTick(() => {
+                  this.currentTetromino._interval = clearInterval(
+                    this.currentTetromino._interval
+                  );
+                  if (this.completedRows.length) {
+                    this.lineClear();
+                  }
+                  if (this.heldTetromino) {
+                    this.heldTetromino._onHold = false;
+                  }
+
+                  this.tetrominos = this.tetrominos.slice(
+                    0,
+                    this.tetrominos.length - 1
+                  );
+                });
               }
             }, this.speedCurve);
           }
@@ -351,8 +353,10 @@ export default {
 
 <style>
 .contain {
-  height: 60vh;
-  width: calc(60vh / 2);
+  height: calc(65vw * 2);
+  max-height: 65vh;
+  width: 65vw;
+  max-width: calc(65vh / 2);
   display: flex;
   flex-direction: column;
   margin: auto;
@@ -399,6 +403,5 @@ export default {
 }
 .G {
   background-color: rgba(255, 255, 255, 0.1);
-  border: 0.5px solid rgba(255, 255, 255, 0.1);
 }
 </style>

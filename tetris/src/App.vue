@@ -9,11 +9,8 @@
       class="d-flex justify-center align-center indigo"
       style="touch-action: none"
     >
-      <v-container class="pa-0">
-        <v-row class="justify-center space-around">
-          <v-col cols="auto" class="pa-0">
-            <on-hold :onHold="onHold"></on-hold>
-          </v-col>
+      <v-container fluid class="py-0">
+        <v-row class="justify-center space-between">
           <v-col cols="auto" class="pa-0">
             <board
               @next-four="nextFour = $event"
@@ -27,7 +24,8 @@
             ></board>
           </v-col>
           <v-col cols="auto" class="py-0">
-            <next-four :nextFour="nextFour"></next-four>
+            <tray :items="nextFour" :screenSize="screenSize"></tray>
+            <tray :items="onHold ? [onHold] : onHold" :screenSize="screenSize" class="mt-3"></tray>
           </v-col>
         </v-row>
       </v-container>
@@ -37,16 +35,16 @@
 
 <script>
 import Board from "./components/Board.vue";
-import NextFour from "./components/NextFour.vue";
-import OnHold from "./components/OnHold.vue";
+import Tray from "./components/Tray.vue";
+//import OnHold from "./components/OnHold.vue";
 
 export default {
   name: "App",
 
   components: {
     Board,
-    NextFour,
-    OnHold
+    Tray,
+    //OnHold
   },
 
   data: () => ({
