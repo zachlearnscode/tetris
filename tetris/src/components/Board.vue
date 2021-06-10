@@ -36,6 +36,7 @@ export default {
     "moveLeft",
     "moveDown",
     "hardDrop",
+    "holdPiece"
   ],
 
   data() {
@@ -43,10 +44,10 @@ export default {
       board: undefined,
       tetrominos: [],
       heldTetromino: undefined,
-      linesCleared: 0,
+      linesCleared: undefined,
       moveRightInt: null,
       moveLeftInt: null,
-      lockTimeout: null
+      lockTimeout: null,
     };
   },
 
@@ -106,7 +107,7 @@ export default {
         0.8 - (this.currentLevel - 1) * 0.007,
         this.currentLevel - 1
       );
-      return 1000 * seconds;
+      return parseInt(1000 * seconds);
     },
     gameOver() {
       let prevOrigin = this.currentTetromino?._prevOrigin;
@@ -147,14 +148,14 @@ export default {
       let rowIdx = Math.min(...this.completedRows);
       let numRows = this.completedRows.length;
 
-      this.clearCompletedRows();
+      this.clearCompletedRows(this.completedRows);
       this.dropOverheadBlocks(rowIdx, numRows);
     },
 
-    clearCompletedRows() {
+    clearCompletedRows(completedRows) {
       let rowCoords = [];
 
-      this.completedRows.forEach((idx) => {
+      completedRows.forEach((idx) => {
         let row = [];
 
         while (row.length < 10) {
@@ -254,24 +255,27 @@ export default {
           if (this.inLockedPosition && !this.currentTetromino._lockDelay) {
             this.currentTetromino._lockDelay = setTimeout(() => {
               if (this.inLockedPosition) {
-                this.$nextTick(() => {
-                  this.currentTetromino._interval = clearInterval(
-                    this.currentTetromino._interval
-                  );
-                  if (this.completedRows.length) {
-                    this.lineClear();
-                  }
-                  if (this.heldTetromino) {
-                    this.heldTetromino._onHold = false;
-                  }
+                this.currentTetromino._interval = clearInterval(
+                  this.currentTetromino._interval
+                );
 
-                  this.tetrominos = this.tetrominos.slice(
-                    0,
-                    this.tetrominos.length - 1
-                  );
-                });
+                if (this.completedRows.length) {
+                  this.lineClear();
+                }
+                if (this.heldTetromino) {
+                  this.heldTetromino._onHold = false;
+                }
+
+                this.tetrominos = this.tetrominos.slice(
+                  0,
+                  this.tetrominos.length - 1
+                );
               }
-            }, this.speedCurve);
+
+              this.currentTetromino._lockDelay = clearTimeout(
+                this.currentTetromino._lockDelay
+              );
+            }, 500);
           }
         }
       },
@@ -279,21 +283,23 @@ export default {
     },
     tetrominos: function () {
       if (this.tetrominos.length < 5) {
-        this.tetrominos = this.queueTetrominos(this.tetrominos);
+        return this.tetrominos = this.queueTetrominos(this.tetrominos);
       }
     },
     completedRows: function () {
-      this.linesCleared += this.completedRows.length;
+      return this.linesCleared += this.completedRows.length;
     },
     heldTetromino: function () {
-      this.$emit("on-hold", this.heldTetromino);
+      return this.$emit("on-hold", this.heldTetromino);
     },
     nextFourTetrominos() {
-      this.$emit("next-four", this.nextFourTetrominos);
+      return this.$emit("next-four", this.nextFourTetrominos);
+    },
+    currentLevel: function() {
+      return this.$emit("current-level", this.currentLevel);
     },
     rotateCW: function () {
       if (this.rotateCW) {
-        // console.log("Hello")
         this.currentTetromino.orientation = { dir: "CW", board: this.board };
       }
     },
@@ -322,14 +328,20 @@ export default {
         this.currentTetromino.move("HD", this.board);
       }
     },
+    holdPiece: function() {
+      if (this.holdPiece) {
+        this.holdTetromino();
+      }
+    }
   },
 
   created() {
     this.board = this.build();
     this.tetrominos = this.queueTetrominos();
+    this.linesCleared = 0;
 
     window.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowUp" || e.key === "xx") {
+      if (e.key === "ArrowUp" || e.key === "x") {
         this.currentTetromino.orientation = { dir: "CW", board: this.board };
       } else if (e.key === "Control" || e.key === "z") {
         this.currentTetromino.orientation = { dir: "CCW", board: this.board };
@@ -347,6 +359,8 @@ export default {
 
       e.preventDefault();
     });
+
+
   },
 };
 </script>

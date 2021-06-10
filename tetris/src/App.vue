@@ -1,11 +1,12 @@
 <template>
-  <v-app>
+  <v-app style="user-select:none;">
     <v-main
-      v-tap="testFn"
-      v-tap:swipe.down.prevent="swipeDown"
-      v-tap:moving.prevent="moving"
-      v-tap:start.prevent="start"
-      v-tap:end.prevent="end"
+      v-tap="rotate"
+      v-tap:swipe.bottom="swipeDown"
+      v-tap:swipe.top="swipeUp"
+      v-tap:moving="moving"
+      v-tap:start="start"
+      v-tap:end="end"
       class="d-flex justify-center align-center indigo"
       style="touch-action: none"
     >
@@ -15,17 +16,22 @@
             <board
               @next-four="nextFour = $event"
               @on-hold="onHold = $event"
+              @current-level="currentLevel = $event"
               :rotateCW="rotateCW"
               :rotateCCW="rotateCCW"
               :hardDrop="hardDrop"
+              :holdPiece="holdPiece"
               :moveRight="moveRight"
               :moveLeft="moveLeft"
               :moveDown="moveDown"
             ></board>
           </v-col>
-          <v-col cols="auto" class="py-0">
-            <tray :items="nextFour" :screenSize="screenSize"></tray>
-            <tray :items="onHold ? [onHold] : onHold" :screenSize="screenSize" class="mt-3"></tray>
+          <v-col cols="auto" class="d-flex flex-column justify-space-between py-0">
+            <div>
+              <tray :items="nextFour" :screenSize="screenSize"></tray>
+              <tray :items="onHold ? [onHold] : onHold" :screenSize="screenSize" class="mt-3"></tray>
+            </div>
+            <span class="white--text text-uppercase text-center">Level {{currentLevel}}</span>
           </v-col>
         </v-row>
       </v-container>
@@ -41,6 +47,12 @@ import Tray from "./components/Tray.vue";
 export default {
   name: "App",
 
+  metaInfo: {
+    meta: [
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' }
+    ]
+  },
+
   components: {
     Board,
     Tray,
@@ -51,15 +63,18 @@ export default {
     rotateCW: false,
     rotateCCW: false,
     hardDrop: false,
+    holdPiece: false,
     moveRight: false,
     moveLeft: false,
     moveDown: false,
+    movingDown: false,
 
-    touchCoords: undefined,
-    touchCoordsLocked: false,
+    benchmarkTouchCoords: undefined,
+    consecutiveTouchEvents: 0,
 
     nextFour: undefined,
-    onHold: undefined
+    onHold: undefined,
+    currentLevel: undefined
   }),
 
   computed: {
@@ -75,60 +90,64 @@ export default {
   },
 
   methods: {
-    testFn2(e) {
-      console.log(e)
-    },
-    testFn(e) {
+    rotate(e) {
       let touch = e.changedTouches[0];
-      let x = touch.screenX;
 
-      if (x > this.screenWidth / 2) {
+      if (touch.screenX > this.screenWidth / 2) {
         this.rotateCW = true;
+        this.$nextTick(() => this.rotateCW = false);
       } else {
         this.rotateCCW = true;
+        this.$nextTick(() => this.rotateCCW = false);
       }
-
-      setTimeout(() => {
-        this.rotateCW = false;
-        this.rotateCCW = false;
-      }, 100);
     },
     swipeDown() {
-      this.hardDrop = true;
-
-      setTimeout(() => (this.hardDrop = false), 100);
+      if (this.consecutiveTouchEvents < 12) {
+        this.hardDrop = true;
+        this.$nextTick(() => this.hardDrop = false);
+      }
+    },
+    swipeUp() {
+      this.holdPiece = true;
+      this.$nextTick(() => this.holdPiece = false);
     },
     moving(e) {
-      //console.log(e)
+      this.consecutiveTouchEvents++;
+
+      let [benchmarkX, benchmarkY] = this.benchmarkTouchCoords;
       let xPos = e.changedTouches[0].pageX;
       let yPos = e.changedTouches[0].pageY;
 
-      if (this.touchCoords[0] - xPos < -17) {
-        this.touchCoords = [xPos, yPos];
+      if (benchmarkX - xPos < -(this.cellSize)) {
+        this.benchmarkTouchCoords = [xPos, yPos];
         this.moveRight = true;
 
-        setTimeout(() => (this.moveRight = false), 100);
-      } else if (this.touchCoords[0] - xPos > 17) {
-        this.touchCoords = [xPos, yPos];
+        this.$nextTick(() => this.moveRight = false);
+      } else if (benchmarkX - xPos > this.cellSize) {
+        this.benchmarkTouchCoords = [xPos, yPos];
         this.moveLeft = true;
 
-        setTimeout(() => (this.moveLeft = false), 100);
-      } else if (this.touchCoords[1] - yPos < -17) {
-        this.touchCoords = [xPos, yPos];
-
+        this.$nextTick(() => this.moveLeft = false);
+      } else if (benchmarkY - yPos < -(this.cellSize)) {
+        this.benchmarkTouchCoords = [xPos, yPos];
         this.moveDown = true;
 
-        setTimeout(() => (this.moveDown = false), 100);
+        this.$nextTick(() => this.moveDown = false);
       }
+
+      return;
     },
     start(e) {
       let xPos = e.changedTouches[0].pageX;
       let yPos = e.changedTouches[0].pageY;
 
-      this.touchCoords = [xPos, yPos];
+      return this.benchmarkTouchCoords = [xPos, yPos];
     },
     end() {
-      this.touchCoords = undefined;
+      this.$nextTick(() => {
+        this.consecutiveTouchEvents = 0;
+        this.benchmarkTouchCoords = undefined;
+      });
     },
   },
 };
