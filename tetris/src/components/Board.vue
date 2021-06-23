@@ -145,7 +145,7 @@ export default {
       return arr;
     },
     lineClear() {
-      let rowIdx = Math.min(...this.completedRows);
+      let rowIdx = Math.max(...this.completedRows);
       let numRows = this.completedRows.length;
 
       this.clearCompletedRows(this.completedRows);
@@ -170,9 +170,7 @@ export default {
         this.updateBoard(c);
       });
     },
-    dropOverheadBlocks(rowIdx, numRows) {
-      let coords = [];
-
+    dropOverheadBlocks(rowIdx) {
       //Get coords of blocks that need to be shifted down.
       this.board
         .filter((row) => {
@@ -181,21 +179,31 @@ export default {
 
           return aboveDeepest && containsBlocks;
         })
+        .reverse()
         .forEach((row) => {
-          let r = this.board.indexOf(row);
+          let idx = this.board.indexOf(row);
+          let idxOfNextOccupiedRow = this.board
+            .findIndex((r, i) => i > idx && r.some(c => c));
+
+          if (idxOfNextOccupiedRow === -1) {
+            idxOfNextOccupiedRow = this.board.length;
+          }          
+
           row.forEach((col, c) => {
-            coords.push([r, c]);
+            this.updateBoard([[idx, c]]);
+            this.updateBoard([[idxOfNextOccupiedRow - 1, c]], col)
           });
         });
 
       //Take value of each coord and move it down by numRows cleared.
-      coords.reverse().forEach((coord) => {
-        let [row, col] = coord;
-        let val = this.board[row][col];
+      // coords.reverse().forEach((coord) => {
+      //   let [row, col] = coord;
+      //   let val = this.board[row][col];
+      //   let idxOfNextOccupiedRow = this.board.findIndex((r, i) => i > row && r.some(c => c))
 
-        this.updateBoard([coord]);
-        this.updateBoard([[row + numRows, col]], val);
-      });
+      //   this.updateBoard([coord]);
+      //   this.updateBoard([[idxOfNextOccupiedRow > -1 ? idxOfNextOccupiedRow - 1 : this.board.length - 1, col]], val);
+      // });
     },
     holdTetromino() {
       let toHold = this.generateTetrominos().find(
