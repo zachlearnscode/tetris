@@ -1,5 +1,5 @@
 <template>
-  <div class="contain">
+  <div class="contain preventTouch">
     <div v-for="(row, r) in boardDisplay" :key="r" class="roww">
       <div
         v-for="(col, c) in row"
@@ -10,7 +10,8 @@
           ghostCoords.map((c) => c.toString()).includes(`${r},${c}`) &&
           !currentTetromino.currentCoords
             .map((c) => c.toString())
-            .includes(`${r + 2},${c}`)
+            .includes(`${r + 2},${c}`) &&
+          currentTetromino.name !== 'E'
             ? 'G'
             : '',
         ]"
@@ -27,6 +28,7 @@ import { Z } from "../Tetrominoes/Z.js";
 import { S } from "../Tetrominoes/S.js";
 import { T } from "../Tetrominoes/T.js";
 import { O } from "../Tetrominoes/O.js";
+import { Empty } from "../Tetrominoes/Empty.js";
 
 export default {
   props: [
@@ -36,7 +38,8 @@ export default {
     "moveLeft",
     "moveDown",
     "hardDrop",
-    "holdPiece"
+    "holdPiece",
+    "countdown",
   ],
 
   data() {
@@ -44,10 +47,7 @@ export default {
       board: undefined,
       tetrominos: [],
       heldTetromino: undefined,
-      linesCleared: undefined,
-      moveRightInt: null,
-      moveLeftInt: null,
-      lockTimeout: null,
+      linesCleared: null,
     };
   },
 
@@ -182,28 +182,19 @@ export default {
         .reverse()
         .forEach((row) => {
           let idx = this.board.indexOf(row);
-          let idxOfNextOccupiedRow = this.board
-            .findIndex((r, i) => i > idx && r.some(c => c));
+          let idxOfNextOccupiedRow = this.board.findIndex(
+            (r, i) => i > idx && r.some((c) => c)
+          );
 
           if (idxOfNextOccupiedRow === -1) {
             idxOfNextOccupiedRow = this.board.length;
-          }          
+          }
 
           row.forEach((col, c) => {
             this.updateBoard([[idx, c]]);
-            this.updateBoard([[idxOfNextOccupiedRow - 1, c]], col)
+            this.updateBoard([[idxOfNextOccupiedRow - 1, c]], col);
           });
         });
-
-      //Take value of each coord and move it down by numRows cleared.
-      // coords.reverse().forEach((coord) => {
-      //   let [row, col] = coord;
-      //   let val = this.board[row][col];
-      //   let idxOfNextOccupiedRow = this.board.findIndex((r, i) => i > row && r.some(c => c))
-
-      //   this.updateBoard([coord]);
-      //   this.updateBoard([[idxOfNextOccupiedRow > -1 ? idxOfNextOccupiedRow - 1 : this.board.length - 1, col]], val);
-      // });
     },
     holdTetromino() {
       let toHold = this.generateTetrominos().find(
@@ -246,6 +237,13 @@ export default {
   },
 
   watch: {
+    countdown: function() {
+      if (this.countdown === 0) {
+        this.updateBoard(this.currentTetromino.mapToCoords());
+        this.currentTetromino._interval = clearInterval(this.currentTetromino._interval);
+        this.tetrominos.pop();
+      }
+    },
     currentTetromino: {
       handler: function () {
         if (!this.currentTetromino._interval) {
@@ -291,11 +289,11 @@ export default {
     },
     tetrominos: function () {
       if (this.tetrominos.length < 5) {
-        return this.tetrominos = this.queueTetrominos(this.tetrominos);
+        return (this.tetrominos = this.queueTetrominos(this.tetrominos));
       }
     },
     completedRows: function () {
-      return this.linesCleared += this.completedRows.length;
+      return (this.linesCleared += this.completedRows.length);
     },
     heldTetromino: function () {
       return this.$emit("on-hold", this.heldTetromino);
@@ -303,7 +301,7 @@ export default {
     nextFourTetrominos() {
       return this.$emit("next-four", this.nextFourTetrominos);
     },
-    currentLevel: function() {
+    currentLevel: function () {
       return this.$emit("current-level", this.currentLevel);
     },
     rotateCW: function () {
@@ -336,17 +334,17 @@ export default {
         this.currentTetromino.move("HD", this.board);
       }
     },
-    holdPiece: function() {
+    holdPiece: function () {
       if (this.holdPiece) {
         this.holdTetromino();
       }
-    }
+    },
   },
 
   created() {
     this.board = this.build();
     this.tetrominos = this.queueTetrominos();
-    this.linesCleared = 0;
+    this.tetrominos.push(new Empty());
 
     window.addEventListener("keydown", (e) => {
       if (e.key === "ArrowUp" || e.key === "x") {
@@ -367,8 +365,6 @@ export default {
 
       e.preventDefault();
     });
-
-
   },
 };
 </script>

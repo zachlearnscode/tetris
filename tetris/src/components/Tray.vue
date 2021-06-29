@@ -1,5 +1,5 @@
 <template>
-  <v-container class="tray">
+  <v-container class="tray preventTouch">
     <v-row
       v-for="(tetromino, i) in normalizedOrientations"
       :key="i"
